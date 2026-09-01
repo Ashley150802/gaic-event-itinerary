@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>How It Works — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>How It Works</h1><p>A technical deep dive into every subsystem in Surket.</p></div>
+
+    <h2>1. Storage Layer</h2>
+    <h3>The Store Interface</h3>
+    <p>The <code>Store</code> interface (<code>server/src/types.ts</code>) is the single contract between business logic and the database. It defines ~30 methods covering CRUD for events, segments, surveys, questions, and responses, plus analytics helpers.</p>
+    <h3>SQLite Driver (Node)</h3>
+    <p><code>sqliteStore.ts</code> implements <code>Store</code> against Node's built-in <code>node:sqlite</code> module. No native modules needed — ships with Node 22.5+. Schema is applied lazily on first <code>init()</code> call.</p>
+    <h3>D1 Driver (Cloudflare)</h3>
+    <p><code>d1Store.ts</code> implements the same interface against Cloudflare D1's prepared statement API. Same portable SQL — no dialect differences.</p>
+    <h3>Schema</h3>
+    <p>Six tables, all portable SQL:</p>
+    <pre><code>events → segments (itinerary, ordered by position)
+events → surveys → questions (ordered by position)
+       surveys → responses → answers (keyed by question_id)</code></pre>
+    <p>Foreign keys use <code>ON DELETE CASCADE</code> for segments, questions, responses, answers, and <code>ON DELETE SET NULL</code> for the survey→event relationship.</p>
+
+    <h2>2. Analytics Engine</h2>
+    <p><code>aggregate.ts</code> is a <strong>pure function</strong> — zero I/O, fully deterministic.</p>
+    <h3>Output: SurveyResults</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>totalResponses</code></td><td>Count of unique responses</td></tr>
+        <tr><td><code>completionRate</code></td><td>Fraction that answered all required questions (0..1)</td></tr>
+        <tr><td><code>averageRating</code></td><td>Mean of all rating-type answers, or null</td></tr>
+        <tr><td><code>npsScore</code></td><td>Net Promoter Score (-100..100)</td></tr>
+        <tr><td><code>sentiment</code></td><td>{ positive, neutral, negative } from text analysis</td></tr>
+        <tr><td><code>questions[]</code></td><td>Per-question tallies with buckets, averages, NPS</td></tr>
+        <tr><td><code>keywords</code></td><td>Top words from text answers (stop-word filtered)</td></tr>
+        <tr><td><code>version</code></td><td>Monotonic counter — increments on every new response</td></tr>
+      </tbody>
+    </table>
+    <h3>Question Type Analytics</h3>
+    <table>
+      <thead><tr><th>Type</th><th>Analytics</th></tr></thead>
+      <tbody>
+        <tr><td><code>single</code></td><td>Bucket counts per option</td></tr>
+        <tr><td><code>multi</code></td><td>Bucket counts (respondents can pick multiple)</td></tr>
+        <tr><td><code>rating</code></td><td>Bucket counts + average</td></tr>
+        <tr><td><code>nps</code></td><td>NPS score: promoters minus detractors</td></tr>
+        <tr><td><code>scale</code></td><td>Bucket counts + average</td></tr>
+        <tr><td><code>number</code></td><td>Bucket counts + average</td></tr>
+        <tr><td><code>text</code></td><td>Keyword extraction + sentiment classification</td></tr>
+        <tr><td><code>date</code></td><td>Bucket counts per date</td></tr>
+      </tbody>
+    </table>
+
+    <h2>3. Live Tally System</h2>
+    <p>The live tally system enables real-time result streaming. The <code>useLiveTally.ts</code> React hook encapsulates both transports behind a single API.</p>
+    <div class="info-box"><h4>Version-Based Polling</h4><p>The <code>version</code> field on <code>SurveyResults</code> is the monotonic cursor. The polling fallback only re-renders when version increases, preventing flicker.</p></div>
+
+    <h2>4. Template System</h2>
+    <p>Templates in <code>templates.ts</code> define pre-built event + survey blueprints. When instantiated, the template engine creates all entities in a single transaction.</p>
+
+    <h2>5. Frontend Router</h2>
+    <p>A custom History-API router (<code>router.tsx</code>) handles SPA navigation without react-router. Routes are defined in <code>App.tsx</code> as a simple path→component map.</p>
+
+    <h2>6. Settings & Theme System</h2>
+    <p>All operator preferences live in <code>localStorage</code> under key <code>surket.settings</code>:</p>
+    <ul>
+      <li><strong>Theme</strong>: 5 accent palettes (Aurora, Ember, Forest, Violet, Rose)</li>
+      <li><strong>Color mode</strong>: Dark / Light / System</li>
+      <li><strong>Density</strong>: Comfortable or Compact</li>
+      <li><strong>Reduce motion</strong>: Disables animations for accessibility</li>
+      <li><strong>Presentation settings</strong>: QR visibility, font scale, percentage display</li>
+    </ul>
+
+    <h2>7. Security Stack</h2>
+    <p>Six middleware layers applied in order: request logger → security headers → CORS → body size limit → rate limit → admin token guard. Public routes (reading, submitting responses) bypass the token check.</p>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

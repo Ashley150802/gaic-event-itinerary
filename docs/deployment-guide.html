@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Deployment Guide — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>Deployment Guide</h1><p>Surket targets three deployment environments. The same code runs on all three because every runtime constructs a Store + live hub and hands them to the shared Hono app.</p></div>
+
+    <h2>Prerequisites</h2>
+    <ul>
+      <li><strong>Node.js ≥ 22.5.0</strong> (24+ recommended)</li>
+      <li><strong>pnpm 9+</strong> (pnpm workspace)</li>
+      <li>No C/C++ toolchain, Python, or Build Tools needed</li>
+    </ul>
+
+    <h2>Option 1 — Local / Self-Hosted (Node.js + SQLite)</h2>
+    <pre><code>git clone https://github.com/LehroSolutions/surket.git
+cd surket &amp;&amp; corepack enable &amp;&amp; pnpm install
+
+# Terminal 1 — API server
+pnpm --filter @surket/server dev
+
+# Terminal 2 — SPA
+pnpm --filter @surket/web dev</code></pre>
+    <h3>Environment Variables</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>PORT</code></td><td><code>8787</code></td><td>HTTP port</td></tr>
+        <tr><td><code>SURKET_DB</code></td><td><code>./surket.db</code></td><td>SQLite file path</td></tr>
+        <tr><td><code>ADMIN_TOKEN</code></td><td><em>unset</em></td><td>Protects write routes when set</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Option 2 — Cloudflare (Workers + D1 + Durable Objects)</h2>
+    <p><strong>Recommended for production</strong>: durable storage + true push-based live tally.</p>
+    <ol>
+      <li><code>cd server &amp;&amp; pnpm exec wrangler login</code></li>
+      <li><code>pnpm exec wrangler d1 create surket</code> — copy <code>database_id</code> to <code>wrangler.toml</code></li>
+      <li><code>pnpm exec wrangler d1 migrations apply surket --remote</code></li>
+      <li><code>pnpm --filter @surket/web build</code></li>
+      <li><code>pnpm exec wrangler secret put ADMIN_TOKEN</code></li>
+      <li><code>pnpm run deploy:cf</code></li>
+    </ol>
+    <h3>Cloudflare Bindings</h3>
+    <table>
+      <thead><tr><th>Binding</th><th>Type</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>DB</code></td><td>D1 database</td><td>Durable storage via d1Store.ts</td></tr>
+        <tr><td><code>LIVE_TALLY</code></td><td>Durable Object</td><td>Per-survey live WebSocket fan-out</td></tr>
+        <tr><td><code>ASSETS</code></td><td>Static assets</td><td>Serves the built SPA from web/dist</td></tr>
+        <tr><td><code>ADMIN_TOKEN</code></td><td>Secret</td><td>Gates write routes</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Option 3 — Vercel (SPA + Serverless API)</h2>
+    <ol>
+      <li>Push the repo to GitHub</li>
+      <li>Import in Vercel — build settings are encoded in <code>vercel.json</code></li>
+      <li>Set <code>ADMIN_TOKEN</code> and <code>SURKET_DB</code> (libSQL/Turso URL) in the Vercel dashboard</li>
+    </ol>
+    <div class="info-box"><h4>Live Tally on Vercel</h4><p>Serverless functions are short-lived — <code>/api/config</code> reports <code>polling</code>. The SPA polls <code>/results</code> on version changes. For push-based updates, integrate a Cloudflare Durable Object, Upstash, or Ably.</p></div>
+
+    <h2>Comparison Matrix</h2>
+    <table>
+      <thead><tr><th>Host</th><th>Storage</th><th>Live Transport</th><th>Best For</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Local/Node</strong></td><td>node:sqlite file</td><td>WebSocket</td><td>Development, single-box hosting</td></tr>
+        <tr><td><strong>Vercel</strong></td><td>libSQL/Turso</td><td>Polling</td><td>Static SPA + serverless API</td></tr>
+        <tr><td><strong>Cloudflare</strong></td><td>D1</td><td>Durable Object (push)</td><td>Production, live audience tally</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Post-Deployment Checklist</h2>
+    <ul class="checklist">
+      <li class="done">Set ADMIN_TOKEN (prevents unauthorized writes)</li>
+      <li class="done">Verify /api/health returns { ok: true }</li>
+      <li class="done">Create a test event via the dashboard</li>
+      <li class="done">Submit a test response via the join flow</li>
+      <li class="done">Verify live tally updates</li>
+      <li class="done">Configure dark/light mode in Settings</li>
+    </ul>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

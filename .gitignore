@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# local SQLite databases
+*.db
+*.db-wal
+*.db-shm
+server/surket.db*
+
+# env
+.env
+.env.local
+.dev.vars
+
+# build tooling
+.wrangler/
+.vercel/
+.turbo/

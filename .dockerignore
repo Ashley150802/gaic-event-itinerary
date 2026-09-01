@@ -1,0 +1,12 @@
+node_modules
+web/node_modules
+server/node_modules
+web/dist
+server/dist
+.git
+.gitignore
+.DS_Store
+*.log
+surket.db
+surket.db-shm
+surket.db-wal

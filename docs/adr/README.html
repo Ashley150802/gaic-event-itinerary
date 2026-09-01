@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Architecture Decision Records — Surket</title>
+  <link rel="stylesheet" href="../docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="../index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>Architecture Decision Records</h1><p>Each ADR captures a significant technical decision with context, reasoning, and consequences.</p></div>
+
+    <h2>Index</h2>
+    <table>
+      <thead><tr><th>ADR</th><th>Title</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#adr-001">ADR-001</a></td><td>Runtime-Agnostic Store Interface</td><td><span class="status status-accepted">Accepted</span></td></tr>
+        <tr><td><a href="#adr-002">ADR-002</a></td><td>Node's Built-in SQLite (Zero Native Modules)</td><td><span class="status status-accepted">Accepted</span></td></tr>
+        <tr><td><a href="#adr-003">ADR-003</a></td><td>Live Tally Transport Strategy</td><td><span class="status status-accepted">Accepted</span></td></tr>
+        <tr><td><a href="#adr-004">ADR-004</a></td><td>Pure Analytics Engine (Zero I/O)</td><td><span class="status status-accepted">Accepted</span></td></tr>
+        <tr><td><a href="#adr-005">ADR-005</a></td><td>Dark/Light Mode via CSS Custom Properties</td><td><span class="status status-accepted">Accepted</span></td></tr>
+      </tbody>
+    </table>
+
+    <hr>
+    <h2 id="adr-001">ADR-001: Runtime-Agnostic Store Interface</h2>
+    <p><span class="status status-accepted">Accepted</span></p>
+    <h4>Context</h4>
+    <p>Surket must run on three distinct hosts: local Node.js, Vercel serverless functions, and Cloudflare Workers. Each has a different storage primitive. Writing separate business logic for each host would triple the maintenance surface.</p>
+    <h4>Decision</h4>
+    <p>Define a single <code>Store</code> interface in <code>server/src/types.ts</code> with ~30 methods. Implement it twice: <code>sqliteStore.ts</code> (Node) and <code>d1Store.ts</code> (Cloudflare D1). All business logic depends only on the interface.</p>
+    <h4>Consequences</h4>
+    <ul>
+      <li><strong>Positive</strong>: Adding a new storage backend requires implementing one file. No changes to routes or analytics.</li>
+      <li><strong>Positive</strong>: Verification harness tests the real code path against node:sqlite — catches regressions without mocking.</li>
+      <li><strong>Negative</strong>: Both drivers must maintain SQL parity. D1-specific features used only for optimization, never correctness.</li>
+    </ul>
+
+    <hr>
+    <h2 id="adr-002">ADR-002: Node's Built-in SQLite (Zero Native Modules)</h2>
+    <p><span class="status status-accepted">Accepted</span></p>
+    <h4>Context</h4>
+    <p>Traditional SQLite libraries (<code>better-sqlite3</code>, <code>sqlite3</code>) require C/C++ compilation, Python, and platform-specific build tools. Node.js 22.5+ ships <code>node:sqlite</code> as a built-in module.</p>
+    <h4>Decision</h4>
+    <p>Use Node's built-in <code>node:sqlite</code> exclusively. The <code>dev</code> and <code>start</code> scripts pass <code>--experimental-sqlite</code> for Node 22.5–23.3 compatibility.</p>
+    <h4>Consequences</h4>
+    <ul>
+      <li><strong>Positive</strong>: <code>pnpm install</code> never compiles anything. Zero C/C++ toolchain dependency.</li>
+      <li><strong>Positive</strong>: Works on Windows without Visual Studio Build Tools or Python.</li>
+      <li><strong>Negative</strong>: Requires Node 22.5+ minimum. The <code>--experimental-sqlite</code> flag is required for 22.5–23.3.</li>
+    </ul>
+
+    <hr>
+    <h2 id="adr-003">ADR-003: Live Tally Transport Strategy</h2>
+    <p><span class="status status-accepted">Accepted</span></p>
+    <h4>Context</h4>
+    <p>The live tally feature requires streaming updates. Three hosts have different WebSocket capabilities: Node (long-lived), Cloudflare (Durable Objects), Vercel (ephemeral, no persistent connections).</p>
+    <h4>Decision</h4>
+    <p>Implement a <strong>transport-agnostic live tally</strong> with automatic fallback. <code>GET /api/config</code> tells the client which transport to use. Node uses in-process LiveHub, Cloudflare uses Durable Objects, Vercel falls back to 3-second polling with version-based re-rendering.</p>
+    <h4>Consequences</h4>
+    <ul>
+      <li><strong>Positive</strong>: Live tally works on every supported host. WebSocket failure degrades to polling gracefully.</li>
+      <li><strong>Negative</strong>: Polling adds 3-second latency on Vercel. The <code>version</code> field must be maintained atomically.</li>
+    </ul>
+
+    <hr>
+    <h2 id="adr-004">ADR-004: Pure Analytics Engine (Zero I/O)</h2>
+    <p><span class="status status-accepted">Accepted</span></p>
+    <h4>Context</h4>
+    <p>Analytics must be fast (live tally re-renders on every submission), consistent across runtimes, and testable. Traditional approaches embed aggregation in SQL or couple it to the ORM.</p>
+    <h4>Decision</h4>
+    <p>Implement <code>aggregate.ts</code> as a <strong>pure function</strong> with zero I/O: <code>computeResults(survey, rows, meta) → SurveyResults</code>. No database calls, no framework imports, fully deterministic. <code>service.ts</code> is the only composition point.</p>
+    <h4>Consequences</h4>
+    <ul>
+      <li><strong>Positive</strong>: Trivially unit-testable. Identical across all runtimes. Easy to extend with new metrics.</li>
+      <li><strong>Negative</strong>: Full recomputation on every call. Acceptable because event surveys rarely exceed a few hundred responses.</li>
+    </ul>
+
+    <hr>
+    <h2 id="adr-005">ADR-005: Dark/Light Mode via CSS Custom Properties</h2>
+    <p><span class="status status-accepted">Accepted</span></p>
+    <h4>Context</h4>
+    <p>Event operators use Surket in varied lighting conditions. The UI must support dark, light, and system modes, persist across sessions, and work with 5 accent themes — all with zero backend writes.</p>
+    <h4>Decision</h4>
+    <p>Use <strong>CSS custom properties</strong> with <code>data-color-mode</code> attribute on <code>&lt;html&gt;</code>. Dark variables on <code>:root</code>, light on <code>[data-color-mode="light"]</code>. System detection via <code>matchMedia</code> with change listener. Persistence via <code>localStorage</code>.</p>
+    <h4>Consequences</h4>
+    <ul>
+      <li><strong>Positive</strong>: Zero JavaScript at render time. No flash-of-wrong-theme. Works identically on all hosts.</li>
+      <li><strong>Negative</strong>: Light mode required tuning every accent theme for contrast on white backgrounds.</li>
+    </ul>
+
+    <div class="doc-footer"><p><a href="../index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

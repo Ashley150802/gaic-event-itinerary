@@ -1,0 +1,32 @@
+# Cloudflare Workers + D1 + Durable Objects deployment for Surket.
+# 1. Create the database:   wrangler d1 create surket
+# 2. Paste the returned database_id below.
+# 3. Apply the schema:      pnpm --filter @surket/server d1:init
+# 4. Deploy:                pnpm --filter @surket/server deploy:cf
+
+name = "surket"
+main = "src/worker.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serve the built SPA via static assets binding.
+assets = { binding = "ASSETS", directory = "../web/dist" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "surket"
+database_id = "61ef8a1c-d355-4445-92e8-5fe96e83ea72"
+
+[[durable_objects.bindings]]
+name = "LIVE_TALLY"
+class_name = "LiveTallyRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LiveTallyRoom"]
+
+# Admin token protects mutating API routes. Leave empty for open dev mode.
+# For production, set a real secret:  wrangler secret put ADMIN_TOKEN
+# Then enter the same token in the app's Settings > Admin access page.
+[vars]
+ADMIN_TOKEN = ""

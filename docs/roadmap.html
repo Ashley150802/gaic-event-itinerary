@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Roadmap — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>Roadmap</h1><p>Planned features, improvements, and milestones for Surket. Items are grouped by horizon — near-term, mid-term, and long-term.</p></div>
+
+    <h2>Near-Term (Next Release) — Core Platform</h2>
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Dark / Light mode with system preference</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>2</td><td>Cloudflare deployment (Workers + D1)</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>3</td><td>Runtime-agnostic Store interface</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>4</td><td>Live tally (WebSocket + polling fallback)</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>5</td><td>Vercel serverless deployment</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>6</td><td>Comprehensive documentation suite</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>7</td><td>Event templates gallery</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>8</td><td>Public itinerary page</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>9</td><td>CSV / JSON export</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+        <tr><td>10</td><td>Admin token security</td><td><span class="status status-shipped">🟢 Shipped</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Mid-Term (Next Quarter)</h2>
+    <h3>Data & Analytics</h3>
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>17</td><td>Incremental aggregation (avoid full recompute)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>18</td><td>Response filtering (channel, date range)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>19</td><td>Comparative analytics (Day 1 vs Day 2)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>20</td><td>Word cloud visualization</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>21</td><td>Sentiment trend over time</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+      </tbody>
+    </table>
+    <h3>Collaboration & Access</h3>
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>23</td><td>Multi-operator access (role-based)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>24</td><td>Operator authentication (OAuth2 / passkey)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>25</td><td>Event cloning</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>26</td><td>Shared dashboards (read-only URLs)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+      </tbody>
+    </table>
+    <h3>Live Experience</h3>
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>28</td><td>Live Q&A module</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>29</td><td>Live word cloud</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>30</td><td>Countdown timer</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>31</td><td>Audience reactions (emoji)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Long-Term (Future)</h2>
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>33</td><td>Plugin / extension system</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>34</td><td>Webhook integrations (Slack, Teams, Zapier)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>37</td><td>White-label branding</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>38</td><td>Offline-first respondent mode (PWA)</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>39</td><td>AI-powered insights</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+        <tr><td>47</td><td>Docker containerization</td><td><span class="status status-planned">⚪ Planned</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Completed Milestones</h2>
+    <h3>v1.0 — Foundation</h3>
+    <ul class="checklist">
+      <li class="done">Event + Survey + Question CRUD</li>
+      <li class="done">8 question types</li>
+      <li class="done">Pure analytics engine (zero I/O)</li>
+      <li class="done">Runtime-agnostic Store interface</li>
+      <li class="done">Node.js local development (node:sqlite)</li>
+      <li class="done">Hono HTTP framework with security stack</li>
+      <li class="done">React 19 + Vite 8 frontend</li>
+    </ul>
+    <h3>v1.1 — Live Tally & Deployment</h3>
+    <ul class="checklist">
+      <li class="done">WebSocket live tally (Node + Cloudflare)</li>
+      <li class="done">Polling fallback (Vercel)</li>
+      <li class="done">Live presenter big-screen view</li>
+      <li class="done">Cloudflare Workers + Vercel deployment</li>
+      <li class="done">Template gallery</li>
+    </ul>
+    <h3>v1.2 — UX & Theming</h3>
+    <ul class="checklist">
+      <li class="done">Dark / Light / System color mode</li>
+      <li class="done">5 accent themes with light-mode contrast</li>
+      <li class="done">Smooth CSS transitions + GSAP animations</li>
+      <li class="done">Responsive mobile layout</li>
+      <li class="done">Public itinerary + QR sharing</li>
+      <li class="done">Comprehensive documentation suite</li>
+    </ul>
+
+    <h2>Prioritization Principles</h2>
+    <ol>
+      <li><strong>Attendee experience first</strong> — features that make responding easier get priority</li>
+      <li><strong>Presenter confidence</strong> — live tally reliability is non-negotiable</li>
+      <li><strong>Operator efficiency</strong> — reduce clicks to create, manage, and analyze events</li>
+      <li><strong>Runtime parity</strong> — every feature must work on Node, Cloudflare, and Vercel</li>
+      <li><strong>Zero-config defaults</strong> — new features should work out of the box</li>
+    </ol>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

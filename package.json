@@ -1,0 +1,28 @@
+{
+  "name": "surket",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Surket - an all-in-one event itinerary + live survey platform. Powered by Lehro Solutions.",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "pnpm --filter @surket/server dev",
+    "dev:web": "pnpm --filter @surket/web dev",
+    "build": "pnpm --filter @surket/web build && pnpm --filter @surket/server build",
+    "start": "pnpm --filter @surket/server start",
+    "typecheck": "pnpm -r typecheck",
+    "verify": "esbuild scripts/verify.ts --bundle --platform=node --format=esm --external:node:sqlite --outfile=.verify.mjs --log-level=warning && node --experimental-sqlite .verify.mjs",
+    "deploy:cf": "pnpm --filter @surket/web build && pnpm --filter @surket/server deploy:cf"
+  },
+  "devDependencies": {
+    "esbuild": "latest"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws": "8.21.0",
+      "esbuild": "0.28.1"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>User Guide — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>User Guide</h1><p>Step-by-step guide for operators (event organizers) and attendees using Surket.</p></div>
+
+    <h2>For Operators</h2>
+    <h3>Getting Started</h3>
+    <ol>
+      <li><strong>Launch Surket</strong> — open the dashboard at your deployment URL (or <code>http://localhost:5173</code> locally)</li>
+      <li>The sidebar provides navigation: <strong>Dashboard</strong>, <strong>Templates</strong>, <strong>Join a survey</strong>, <strong>Settings</strong></li>
+    </ol>
+
+    <h3>Creating an Event</h3>
+    <ol>
+      <li>Click <strong>"+ New event"</strong> on the Dashboard</li>
+      <li>Fill in: title, organizer, location, start date, description</li>
+      <li>Choose a <strong>theme</strong> (Aurora, Ember, Forest, Violet, Rose) — this sets the accent colors</li>
+      <li>Click <strong>Create</strong> — you'll land in the <strong>Event Workspace</strong></li>
+    </ol>
+    <p>Or use a <strong>Template</strong>: go to Templates → pick an event blueprint → click <strong>Use this template</strong>.</p>
+
+    <h3>Building the Itinerary</h3>
+    <p>In the Event Workspace, the <strong>Itinerary</strong> tab shows the day's timeline:</p>
+    <ol>
+      <li>Click <strong>"+ Add segment"</strong> to create entries: Keynote, Session, Workshop, Panel, Break, Networking, Survey</li>
+      <li>Each segment has: title, speaker, location, start/end time, description</li>
+      <li><strong>Drag to reorder</strong> — segments are ordered by position</li>
+      <li><strong>Link a survey</strong> — set the <code>surveyId</code> on a segment to connect it to a survey</li>
+    </ol>
+
+    <h3>Creating Surveys</h3>
+    <h4>Question Types</h4>
+    <table>
+      <thead><tr><th>Type</th><th>What Attendees See</th><th>Analytics</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Single choice</strong></td><td>Radio buttons — pick one</td><td>Bar chart of option counts</td></tr>
+        <tr><td><strong>Multiple choice</strong></td><td>Checkboxes — pick many</td><td>Bar chart of option counts</td></tr>
+        <tr><td><strong>Star rating</strong></td><td>1-5 stars</td><td>Average rating + distribution</td></tr>
+        <tr><td><strong>NPS (0-10)</strong></td><td>Scale 0-10</td><td>NPS score (-100 to 100)</td></tr>
+        <tr><td><strong>Scale</strong></td><td>Custom numeric range</td><td>Average + distribution</td></tr>
+        <tr><td><strong>Number</strong></td><td>Free numeric input</td><td>Average + distribution</td></tr>
+        <tr><td><strong>Date</strong></td><td>Date picker</td><td>Date frequency</td></tr>
+        <tr><td><strong>Open text</strong></td><td>Free text area</td><td>Keywords + sentiment</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Going Live</h3>
+    <ol>
+      <li>In the survey settings, toggle <strong>"Go live"</strong> — the survey becomes accessible via its join code</li>
+      <li>Share the <strong>join code</strong> (or QR code) with attendees</li>
+      <li>Attendees visit the join URL, enter the code, and start answering</li>
+    </ol>
+
+    <h3>Live Presentation</h3>
+    <ol>
+      <li>From the survey detail, click <strong>"Present live"</strong> — opens the big-screen view</li>
+      <li>Full-screen page shows: live-updating bar charts, response count, QR code, join code</li>
+      <li>Results update in <strong>real-time</strong> via WebSocket (or 3-second polling)</li>
+      <li>Navigate between questions to present each one</li>
+    </ol>
+
+    <h3>Settings</h3>
+    <div class="grid-2">
+      <div class="info-box"><h4>Appearance</h4><p>Color mode (Dark/Light/System), accent theme, density, reduce motion toggle.</p></div>
+      <div class="info-box"><h4>Admin Access</h4><p>Enter your admin token if the deployment is protected. Stored in localStorage.</p></div>
+      <div class="info-box"><h4>Event Defaults</h4><p>Default template, organizer, location, timezone. Auto-detected from browser.</p></div>
+      <div class="info-box"><h4>Live Display</h4><p>Show/hide QR code, percentages, question text font scale (85% - 140%).</p></div>
+    </div>
+
+    <hr>
+    <h2>For Attendees</h2>
+    <h3>Joining a Survey</h3>
+    <ol>
+      <li><strong>Scan the QR code</strong> shown on the presenter screen, OR</li>
+      <li><strong>Visit the join URL</strong> and enter the join code</li>
+    </ol>
+    <h3>Answering Questions</h3>
+    <p>Follow the question flow — each type has an intuitive input. Required questions are marked with a red asterisk. Submit when complete.</p>
+    <h3>Viewing a Public Itinerary</h3>
+    <p>See the full event timeline. "Happening now" and "Up next" cards highlight the current/next segment. One-tap "Rate this" buttons link to associated surveys.</p>
+
+    <hr>
+    <h2>Tips</h2>
+    <ul>
+      <li><strong>Theme toggle</strong>: the sun/moon button in the topbar instantly switches dark/light mode</li>
+      <li><strong>Compact mode</strong>: in Settings → Density → Compact for more data-dense views</li>
+      <li><strong>Templates save time</strong>: start from a blueprint, then customize</li>
+      <li><strong>Export regularly</strong>: download CSV/JSON backups from Settings before major changes</li>
+    </ul>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

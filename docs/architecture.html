@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Architecture — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>Architecture</h1><p>System architecture, data model, layer boundaries, and design principles that govern every extension.</p></div>
+
+    <h2>1. Design Principles</h2>
+    <table>
+      <thead><tr><th>#</th><th>Principle</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>One Store contract, many drivers</strong></td><td>All data access goes through the <code>Store</code> interface. Swapping storage never touches business logic.</td></tr>
+        <tr><td>2</td><td><strong>Pure analytics</strong></td><td><code>aggregate.ts</code> has zero I/O — deterministic, trivially testable, identical across runtimes.</td></tr>
+        <tr><td>3</td><td><strong>One composition layer</strong></td><td><code>service.ts</code> wires Store + aggregate + live hub. Both Node and Cloudflare call the same functions.</td></tr>
+        <tr><td>4</td><td><strong>Framework at the edges only</strong></td><td>Hono routing in <code>app.ts</code>. Entry points just construct dependencies and hand them to <code>createApp</code>.</td></tr>
+        <tr><td>5</td><td><strong>No native modules</strong></td><td>Storage uses Node's built-in <code>node:sqlite</code>. No C/C++ toolchain needed.</td></tr>
+        <tr><td>6</td><td><strong>Client-side preferences</strong></td><td>Theme, density, color mode live in <code>localStorage</code>. Zero backend writes for UI state.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>2. System Layers</h2>
+    <pre class="mermaid">
+graph TB
+    Browser["Browser — React 19 SPA<br/>Vite 8 · GSAP · Motion"]
+    Hono["Hono HTTP Layer — app.ts<br/>CORS · Rate Limit · Auth"]
+    Service["Service Layer — service.ts<br/>getSurveyResults() · submitResponse()"]
+    Store["Store Interface — types.ts"]
+    Aggregate["aggregate.ts — Pure Analytics<br/>Zero I/O · Deterministic"]
+    NodeStore["sqliteStore.ts — Node"]
+    D1Store["d1Store.ts — Cloudflare D1"]
+    LiveHub["LiveHub / Durable Object<br/>WebSocket fan-out"]
+    Browser -->|"HTTP REST + WebSocket"| Hono
+    Hono --> Service
+    Service --> Store
+    Service --> Aggregate
+    Store --> NodeStore
+    Store --> D1Store
+    Service --> LiveHub
+    </pre>
+
+    <h2>3. Domain Model</h2>
+    <pre class="mermaid">
+erDiagram
+    EVENT ||--o{ SEGMENT : contains
+    EVENT ||--o{ SURVEY : has
+    SURVEY ||--|{ QUESTION : defines
+    SURVEY ||--o{ RESPONSE : collects
+    RESPONSE ||--|{ ANSWER : holds
+    SEGMENT }o--o| SURVEY : links
+    EVENT { string id PK  string slug UK  string title  string status  string theme }
+    SURVEY { string id PK  string eventId FK  string title  string status  string joinCode UK }
+    QUESTION { string id PK  string surveyId FK  string label  string type  bool required }
+    RESPONSE { string id PK  string surveyId FK  string channel  string createdAt }
+    ANSWER { string id PK  string responseId FK  string questionId FK  any value }
+    </pre>
+    <table>
+      <thead><tr><th>Entity</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Event</strong></td><td>Top-level container. <code>status: draft | live | archived</code>, a theme, organizer, URL slug.</td></tr>
+        <tr><td><strong>Segment</strong></td><td>Itinerary entry. Kinds: keynote, session, workshop, panel, break, networking, survey. Ordered by position.</td></tr>
+        <tr><td><strong>Survey</strong></td><td>A set of questions. <code>status: draft | live | paused | closed</code>, <code>mode: standard | live</code>, a short <code>joinCode</code>.</td></tr>
+        <tr><td><strong>Question</strong></td><td><code>type: rating | single | multi | number | text | nps | scale | date</code>. Extensible config.</td></tr>
+        <tr><td><strong>Response</strong></td><td>A respondent's submission. Holds channel and optional note.</td></tr>
+        <tr><td><strong>Answer</strong></td><td>Per-question value inside a response. <code>string | number | string[]</code>.</td></tr>
+        <tr><td><strong>SurveyResults</strong></td><td>Computed analytics: tallies, NPS, sentiment, keywords, daily timeline, monotonic version.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>4. Live Tally Architecture</h2>
+    <pre class="mermaid">
+sequenceDiagram
+    participant R as Respondent Phone
+    participant API as Hono API
+    participant Svc as service.ts
+    participant DB as Store
+    participant Hub as LiveHub / DO
+    participant P as Presenter Screen
+    R->>API: POST /surveys/:id/responses
+    API->>Svc: submitResponse(store, hub, id, body)
+    Svc->>DB: createResponse()
+    Svc->>DB: getAnswerRows()
+    Svc->>Svc: aggregate(results)
+    Svc->>Hub: publish(surveyTopic, results)
+    Hub-->>P: WebSocket push
+    API-->>R: 201 { results, version }
+    Note over P: If WebSocket unavailable,<br/>polls /results on version change
+    </pre>
+    <h3>Transport Selection</h3>
+    <table>
+      <thead><tr><th>Host</th><th>Transport</th><th>Mechanism</th></tr></thead>
+      <tbody>
+        <tr><td>Node (local)</td><td>WebSocket</td><td>In-process <code>LiveHub</code> pub/sub</td></tr>
+        <tr><td>Cloudflare</td><td>WebSocket</td><td>Per-survey <code>LiveTallyRoom</code> Durable Object</td></tr>
+        <tr><td>Vercel</td><td>Polling</td><td>Client polls <code>GET /results</code> every 3 seconds</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. Security Model</h2>
+    <table>
+      <thead><tr><th>Layer</th><th>Implementation</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Request logging</td><td><code>requestLogger()</code></td><td>Audit trail for all API calls</td></tr>
+        <tr><td>Security headers</td><td><code>securityHeaders()</code></td><td>OWASP-aligned: X-Frame, CSP, etc.</td></tr>
+        <tr><td>Hardened CORS</td><td><code>hardenedCors()</code></td><td>Environment-aware origin policy</td></tr>
+        <tr><td>Body size limit</td><td><code>bodySizeLimit(100KB)</code></td><td>Prevent payload abuse</td></tr>
+        <tr><td>Rate limiting</td><td><code>rateLimit(120/min)</code></td><td>Per-IP throttle on <code>/api/*</code></td></tr>
+        <tr><td>Admin token</td><td>Middleware guard</td><td>Write routes require <code>x-admin-token</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>6. Frontend Architecture</h2>
+    <div class="card">
+      <pre><code>web/src/
+├── main.tsx              # Entry: SettingsProvider → RouterProvider → App
+├── App.tsx               # Route table (shell vs full-screen)
+├── router.tsx            # Tiny History-API router (no react-router)
+├── styles.css            # CSS custom properties + component styles
+├── api.ts                # Typed HTTP client for /api
+├── components/
+│   ├── Layout.tsx        # App shell: sidebar + topbar + theme toggle
+│   ├── ui.tsx            # Button, Card, Badge, Modal, Toast, etc.
+│   ├── icons.tsx         # Inline SVG icon system (zero network requests)
+│   └── charts.tsx        # Bar, spark, donut chart components
+├── pages/
+│   ├── Dashboard.tsx     # Event list + stats
+│   ├── EventWorkspace.tsx # Event detail: itinerary, surveys, analytics
+│   ├── SurveyBuilder.tsx # Question editor + ordering
+│   ├── LivePresent.tsx   # Big-screen live tally view
+│   ├── Respond.tsx       # Attendee survey form
+│   ├── PublicItinerary.tsx # Public event timeline
+│   └── Settings.tsx      # Operator preferences
+├── hooks/
+│   └── useLiveTally.ts   # WebSocket + polling fallback hook
+└── lib/
+    ├── settings.tsx       # Client-side preferences + theme system
+    ├── motion.ts          # GSAP reveal animations
+    └── export.ts          # CSV/JSON export utilities</code></pre>
+    </div>
+
+    <h3>Theme System</h3>
+    <p>Supports <strong>dark</strong>, <strong>light</strong>, and <strong>system</strong> (follows OS preference):</p>
+    <ul>
+      <li><strong>CSS variables</strong> on <code>:root</code> (dark) and <code>[data-color-mode="light"]</code> (light)</li>
+      <li><strong>5 accent themes</strong>: Aurora, Ember, Forest, Violet, Rose — each with light-mode contrast overrides</li>
+      <li><strong>Persistence</strong>: <code>localStorage</code> via <code>surket.settings</code> key</li>
+    </ul>
+
+    <h2>7. Monorepo Structure</h2>
+    <pre><code>surket/
+├── web/                # React + Vite SPA
+├── server/             # Hono API + storage + analytics
+│   ├── src/
+│   │   ├── types.ts       # Domain types + Store contract
+│   │   ├── schema.ts      # SQL schema (portable)
+│   │   ├── sqliteStore.ts # Node driver (node:sqlite)
+│   │   ├── d1Store.ts     # Cloudflare D1 driver
+│   │   ├── aggregate.ts   # Pure analytics engine
+│   │   ├── service.ts     # Composition layer
+│   │   ├── app.ts         # Hono routes
+│   │   ├── security.ts    # Security middleware stack
+│   │   ├── index.ts       # Node entry
+│   │   └── worker.ts      # Cloudflare entry
+│   └── wrangler.toml      # Cloudflare config
+├── api/                # Vercel serverless entry
+├── docs/               # This documentation
+└── pnpm-workspace.yaml # Workspace config</code></pre>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>mermaid.initialize({startOnLoad:true,theme:'dark'});function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Surket — Interactive Architecture Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0e14; --surface: #151c29; --surface-2: #1b2535;
+      --border: #243044; --text: #eaf0fa; --text-muted: #9fb0c9; --text-faint: #6c7f9e;
+      --accent: #6ea8fe; --accent-2: #38d3c4; --good: #46c98b; --warn: #f5b454; --bad: #ef6f6f;
+      --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+    [data-theme="light"] {
+      --bg: #f5f6f8; --surface: #ffffff; --surface-2: #f0f1f4;
+      --border: #dfe1e6; --text: #1a1d26; --text-muted: #5a6178; --text-faint: #8a90a2;
+      --accent: #3b7ddd; --accent-2: #1aab9b; --good: #2ea86b; --warn: #d99530; --bad: #d94f4f;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased; line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 48px; }
+    .header h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
+    .header h1 .accent { color: var(--accent); }
+    .header p { color: var(--text-muted); font-size: 16px; margin-top: 8px; max-width: 60ch; margin-inline: auto; }
+    .badge-row { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface);
+    }
+    .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+    .badge.node::before { background: var(--good); }
+    .badge.cf::before { background: var(--warn); }
+    .badge.vercel::before { background: var(--text-faint); }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed; top: 20px; right: 24px; z-index: 100;
+      width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-muted); cursor: pointer;
+      display: grid; place-items: center; font-size: 20px;
+      transition: background .2s, border-color .2s, transform .15s;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: var(--accent); transform: translateY(-1px); }
+
+    /* Nav */
+    .toc {
+      position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg) 90%, transparent);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      padding: 12px 0; margin: 0 -24px 40px; padding-left: 24px; padding-right: 24px;
+    }
+    .toc-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    }
+    .toc-inner::-webkit-scrollbar { display: none; }
+    .toc a {
+      flex: none; padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); text-decoration: none; border: 1px solid transparent;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .toc a:hover { color: var(--text); background: var(--surface-2); }
+    .toc a.active { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+    /* Diagram sections */
+    .section { margin-bottom: 56px; scroll-margin-top: 80px; }
+    .section-title {
+      font-size: 22px; font-weight: 700; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title .num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; font-size: 14px; font-weight: 800; flex: none;
+    }
+    .section-desc { color: var(--text-muted); font-size: 14.5px; margin-bottom: 20px; max-width: 72ch; }
+
+    .diagram-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; overflow-x: auto; transition: border-color .2s;
+    }
+    .diagram-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+    .diagram-card .mermaid { display: flex; justify-content: center; }
+    .diagram-card .mermaid svg { max-width: 100%; height: auto; }
+
+    /* Info boxes */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+    .info-box {
+      padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border);
+    }
+    .info-box h4 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+    .info-box p { font-size: 13.5px; color: var(--text-muted); }
+    .info-box code { font-family: var(--mono); font-size: 12px; background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 2px 6px; border-radius: 5px; color: var(--accent); }
+
+    /* Layer table */
+    .layer-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    .layer-table th { text-align: left; padding: 10px 14px; font-weight: 700; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 2px solid var(--border); }
+    .layer-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .layer-table tr:hover td { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+    .layer-table code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+    /* Footer */
+    .footer { text-align: center; color: var(--text-faint); font-size: 13px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 720px) {
+      .container { padding: 24px 16px 60px; }
+      .header h1 { font-size: 26px; }
+      .diagram-card { padding: 16px; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
+    <span id="theme-icon">☀️</span>
+  </button>
+
+  <div class="container">
+    <div class="header">
+      <h1><span class="accent">Surket</span> Architecture</h1>
+      <p>Interactive system diagrams covering data flow, deployment topology, security layers, and the live tally pipeline.</p>
+      <div class="badge-row">
+        <span class="badge node">Node.js (sqlite)</span>
+        <span class="badge cf">Cloudflare (D1)</span>
+        <span class="badge vercel">Vercel (serverless)</span>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-inner">
+        <a href="#system-layers" class="active">System Layers</a>
+        <a href="#data-model">Data Model</a>
+        <a href="#live-tally">Live Tally</a>
+        <a href="#security">Security</a>
+        <a href="#deployment">Deployment</a>
+        <a href="#frontend">Frontend</a>
+        <a href="#theme">Theme System</a>
+        <a href="#request-flow">Request Flow</a>
+      </div>
+    </nav>
+
+    <!-- 1. System Layers -->
+    <section class="section" id="system-layers">
+      <h2 class="section-title"><span class="num">1</span> System Layers</h2>
+      <p class="section-desc">Surket follows a strict layered architecture. The browser talks to Hono routes, which call the service layer, which composes the Store interface and the pure analytics engine.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph TB
+    Browser["Browser<br/>React 19 SPA<br/>Vite 8 · GSAP · Motion"]
+    Hono["Hono HTTP Layer<br/>app.ts<br/>CORS · Rate Limit · Auth"]
+    Service["Service Layer<br/>service.ts<br/>getSurveyResults()<br/>submitResponse()"]
+    Store["Store Interface<br/>types.ts<br/>~30 methods"]
+    Aggregate["aggregate.ts<br/>Pure Analytics<br/>Zero I/O · Deterministic"]
+    NodeStore["sqliteStore.ts<br/>Node · node:sqlite"]
+    D1Store["d1Store.ts<br/>Cloudflare D1"]
+    LiveHub["LiveHub / Durable Object<br/>WebSocket fan-out"]
+
+    Browser -->|"HTTP REST + WebSocket"| Hono
+    Hono --> Service
+    Service --> Store
+    Service --> Aggregate
+    Store --> NodeStore
+    Store --> D1Store
+    Service --> LiveHub
+        </pre>
+      </div>
+      <div class="info-grid">
+        <div class="info-box">
+          <h4>Browser</h4>
+          <p>React 19 SPA with Vite 8. Custom router (no react-router). GSAP animations. CSS custom properties for theming.</p>
+        </div>
+        <div class="info-box">
+          <h4>Service Layer</h4>
+          <p>Single composition point. Wires <code>Store</code> + <code>aggregate</code> + <code>LiveHub</code>. Identical on all runtimes.</p>
+        </div>
+        <div class="info-box">
+          <h4>Pure Analytics</h4>
+          <p><code>aggregate.ts</code> has zero I/O. Given survey + answers, returns <code>SurveyResults</code>. Trivially testable.</p>
+        </div>
+        <div class="info-box">
+          <h4>Store Drivers</h4>
+          <p><code>sqliteStore.ts</code> for Node, <code>d1Store.ts</code> for Cloudflare. Same portable SQL, no dialect differences.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Data Model -->
+    <section class="section" id="data-model">
+      <h2 class="section-title"><span class="num">2</span> Domain Data Model</h2>
+      <p class="section-desc">Six tables connected by foreign keys. All SQL is portable between SQLite and D1 with no dialect-specific features.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+erDiagram
+    EVENT ||--o{ SEGMENT : contains
+    EVENT ||--o{ SURVEY : has
+    SURVEY ||--|{ QUESTION : defines
+    SURVEY ||--o{ RESPONSE : collects
+    RESPONSE ||--|{ ANSWER : holds
+    SEGMENT }o--o| SURVEY : links
+
+    EVENT {
+        string id PK
+        string slug UK
+        string title
+        string status
+        string theme
+        string organizer
+        string startsAt
+    }
+    SEGMENT {
+        string id PK
+        string eventId FK
+        int position
+        string kind
+        string title
+        string speaker
+        string surveyId FK
+    }
+    SURVEY {
+        string id PK
+        string eventId FK
+        string title
+        string status
+        string mode
+        bool isLive
+        string joinCode UK
+    }
+    QUESTION {
+        string id PK
+        string surveyId FK
+        int position
+        string label
+        string type
+        bool required
+        string options
+    }
+    RESPONSE {
+        string id PK
+        string surveyId FK
+        string channel
+        string createdAt
+    }
+    ANSWER {
+        string id PK
+        string responseId FK
+        string questionId FK
+        any value
+    }
+        </pre>
+      </div>
+      <table class="layer-table">
+        <thead><tr><th>Entity</th><th>Key Fields</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Event</strong></td><td><code>slug</code>, <code>status</code>, <code>theme</code></td><td>Top-level container. Status: draft / live / archived.</td></tr>
+          <tr><td><strong>Segment</strong></td><td><code>position</code>, <code>kind</code>, <code>surveyId</code></td><td>Itinerary entry. Kinds: keynote, session, workshop, panel, break, networking, survey.</td></tr>
+          <tr><td><strong>Survey</strong></td><td><code>joinCode</code>, <code>isLive</code>, <code>mode</code></td><td>Collection of questions. Mode: standard or live. Short join code for attendees.</td></tr>
+          <tr><td><strong>Question</strong></td><td><code>type</code>, <code>required</code>, <code>options</code></td><td>Types: rating, single, multi, number, text, nps, scale, date.</td></tr>
+          <tr><td><strong>Response</strong></td><td><code>channel</code>, <code>createdAt</code></td><td>Attendee submission. Channel tracks source (web, mobile, etc.).</td></tr>
+          <tr><td><strong>Answer</strong></td><td><code>questionId</code>, <code>value</code></td><td>Per-question value. Type: string, number, or string[].</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3. Live Tally -->
+    <section class="section" id="live-tally">
+      <h2 class="section-title"><span class="num">3</span> Live Tally Pipeline</h2>
+      <p class="section-desc">Real-time result streaming from respondents to a big-screen presenter view. Transport-agnostic: WebSocket on Node/Cloudflare, polling on Vercel.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+sequenceDiagram
+    participant R as Respondent<br/>Phone
+    participant API as Hono API
+    participant Svc as service.ts
+    participant DB as Store
+    participant Hub as LiveHub / DO
+    participant P as Presenter<br/>Screen
+
+    R->>API: POST /surveys/:id/responses
+    API->>Svc: submitResponse(store, hub, id, body)
+    Svc->>DB: createResponse()
+    Svc->>DB: getAnswerRows()
+    Svc->>Svc: aggregate(results)
+    Svc->>Hub: publish(surveyTopic, results)
+    Hub-->>P: WebSocket push<br/>{ type: "results", version }
+    API-->>R: 201 { results, version }
+
+    Note over P: If WebSocket unavailable,<br/>polls GET /results every 3s<br/>re-renders only on version change
+        </pre>
+      </div>
+      <div class="info-grid">
+        <div class="info-box">
+          <h4>Node.js</h4>
+          <p>In-process <code>LiveHub</code> pub/sub. WebSocket upgrade on <code>/api/live/:topic</code>. Zero external services.</p>
+        </div>
+        <div class="info-box">
+          <h4>Cloudflare</h4>
+          <p>Per-survey <code>LiveTallyRoom</code> Durable Object. Holds WebSocket connections and broadcasts to all subscribed clients.</p>
+        </div>
+        <div class="info-box">
+          <h4>Vercel</h4>
+          <p>Client polls <code>GET /api/surveys/:id/results</code> every 3 seconds. The <code>version</code> field prevents flicker — UI only updates when version increases.</p>
+        </div>
+        <div class="info-box">
+          <h4>Version Counter</h4>
+          <p><code>SurveyResults.version</code> is a monotonic counter = total response count. Single source of truth for "has anything changed?"</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Security -->
+    <section class="section" id="security">
+      <h2 class="section-title"><span class="num">4</span> Security Stack</h2>
+      <p class="section-desc">Layered middleware applied in order. Each layer is independent and can be toggled per environment.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph LR
+    REQ["Incoming<br/>Request"] --> RL["Request<br/>Logger"]
+    RL --> SH["Security<br/>Headers"]
+    SH --> CORS["Hardened<br/>CORS"]
+    CORS --> BS["Body Size<br/>Limit 100KB"]
+    BS --> RT["Rate Limit<br/>120/min"]
+    RT --> AUTH{"Admin<br/>Token?"}
+    AUTH -->|Read| OK["Allowed<br/>Public Reads"]
+    AUTH -->|Write + Token| OK2["Allowed<br/>Mutation"]
+    AUTH -->|Write + No Token| DENY["403<br/>Forbidden"]
+        </pre>
+      </div>
+      <table class="layer-table">
+        <thead><tr><th>Layer</th><th>Middleware</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>requestLogger()</code></td><td>Audit trail for all API calls with method, path, status, duration</td></tr>
+          <tr><td>2</td><td><code>securityHeaders()</code></td><td>OWASP-aligned: X-Frame-Options, X-Content-Type-Options, CSP, etc.</td></tr>
+          <tr><td>3</td><td><code>hardenedCors()</code></td><td>Environment-aware origin policy. Dev: permissive. Prod: strict.</td></tr>
+          <tr><td>4</td><td><code>bodySizeLimit(100KB)</code></td><td>Prevent large payload abuse on all mutation endpoints</td></tr>
+          <tr><td>5</td><td><code>rateLimit(120/min)</code></td><td>Per-IP throttle on <code>/api/*</code> routes</td></tr>
+          <tr><td>6</td><td>Admin token guard</td><td>Write routes require <code>x-admin-token</code> header when <code>ADMIN_TOKEN</code> env is set</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. Deployment -->
+    <section class="section" id="deployment">
+      <h2 class="section-title"><span class="num">5</span> Deployment Topology</h2>
+      <p class="section-desc">Same codebase, three deployment targets. The Store interface and pure analytics ensure identical behavior everywhere.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph TB
+    subgraph LOCAL["Local Development"]
+        N_ENTRY["index.ts<br/>Node Entry"] --> N_APP["Hono App"]
+        N_APP --> N_STORE["sqliteStore<br/>node:sqlite"]
+        N_STORE --> N_DB[("surket.db<br/>File")]
+        N_APP --> N_HUB["LiveHub<br/>In-process"]
+    end
+
+    subgraph CF["Cloudflare Workers"]
+        C_ENTRY["worker.ts<br/>Worker Entry"] --> C_APP["Hono App"]
+        C_APP --> C_STORE["d1Store<br/>D1 API"]
+        C_STORE --> C_DB[("D1<br/>Database")]
+        C_APP --> C_DO["LiveTallyRoom<br/>Durable Object"]
+        C_ENTRY --> C_ASSETS["ASSETS<br/>Static Files"]
+    end
+
+    subgraph VC["Vercel Serverless"]
+        V_ENTRY["api/index.ts<br/>Serverless Fn"] --> V_APP["Hono App"]
+        V_APP --> V_STORE["sqliteStore<br/>node:sqlite"]
+        V_STORE --> V_DB[("SQLite<br/>Ephemeral")]
+        V_APP -.->|"No WS"| V_POLL["Polling<br/>Fallback"]
+    end
+        </pre>
+      </div>
+      <div class="info-grid">
+        <div class="info-box">
+          <h4>Node.js</h4>
+          <p>Best local dev experience. Hot reload. WebSocket live tally. Persistent SQLite file. Run with <code>pnpm dev</code>.</p>
+        </div>
+        <div class="info-box">
+          <h4>Cloudflare</h4>
+          <p>Edge deployment. D1 for persistence. Durable Objects for WebSocket. Modern assets binding serves the SPA. Zero cold starts.</p>
+        </div>
+        <div class="info-box">
+          <h4>Vercel</h4>
+          <p>Serverless functions. Ephemeral SQLite (demo only). Polling-based live tally with 3s interval. Zero-config deploy via <code>vercel.json</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Frontend -->
+    <section class="section" id="frontend">
+      <h2 class="section-title"><span class="num">6</span> Frontend Architecture</h2>
+      <p class="section-desc">React 19 SPA with a custom History-API router. No react-router dependency. Pages are code-split and lazy-loaded.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph TB
+    MAIN["main.tsx<br/>SettingsProvider → RouterProvider → App"]
+    APP["App.tsx<br/>Route Table<br/>Shell vs Full-screen"]
+    ROUTER["router.tsx<br/>Custom History API<br/>No react-router"]
+
+    LAYOUT["Layout.tsx<br/>Sidebar + Topbar<br/>Theme Toggle"]
+
+    P1["Dashboard"]
+    P2["EventWorkspace"]
+    P3["SurveyBuilder"]
+    P4["LivePresent"]
+    P5["Respond"]
+    P6["PublicItinerary"]
+    P7["Settings"]
+    P8["Templates"]
+
+    HOOKS["useLiveTally.ts<br/>WS + Polling"]
+    SETTINGS["settings.tsx<br/>Theme · Density<br/>ColorMode · Motion"]
+    API["api.ts<br/>Typed HTTP Client<br/>Admin Token"]
+
+    MAIN --> APP
+    APP --> ROUTER
+    ROUTER --> LAYOUT
+    LAYOUT --> P1
+    LAYOUT --> P2
+    LAYOUT --> P3
+    LAYOUT --> P4
+    LAYOUT --> P5
+    LAYOUT --> P6
+    LAYOUT --> P7
+    LAYOUT --> P8
+    P4 --> HOOKS
+    APP --> SETTINGS
+    API --> LAYOUT
+        </pre>
+      </div>
+    </section>
+
+    <!-- 7. Theme System -->
+    <section class="section" id="theme">
+      <h2 class="section-title"><span class="num">7</span> Theme & Color Mode System</h2>
+      <p class="section-desc">CSS custom properties with attribute-based switching. Five accent themes, each with light-mode contrast overrides. Persists via localStorage.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+graph TB
+    LS["localStorage<br/>surket.settings"] --> LOAD["loadSettings()"]
+    LOAD --> PROVIDER["SettingsProvider<br/>React Context"]
+    PROVIDER --> RESOLVE["resolveColorMode()<br/>dark | light | system"]
+    RESOLVE -->|"system"| MQ["matchMedia<br/>prefers-color-scheme"]
+    RESOLVE -->|"dark / light"| APPLY["applyToBody()"]
+    MQ --> APPLY
+    APPLY --> HTML['&lt;html data-color-mode="dark|light"&gt;']
+    HTML --> CSS["styles.css<br/>:root vars<br/>[data-color-mode=light] vars"]
+    CSS --> THEMES["5 Accent Themes<br/>Aurora · Ember · Forest<br/>Violet · Rose"]
+    THEMES --> OVERRIDE["Light Mode Overrides<br/>Higher contrast values"]
+
+    TOGGLE["Topbar Toggle<br/>☀ / ☾"] --> PROVIDER
+    PAGE["Settings Page<br/>Dark / Light / System"] --> PROVIDER
+        </pre>
+      </div>
+      <div class="info-grid">
+        <div class="info-box">
+          <h4>Persistence</h4>
+          <p><code>localStorage</code> key: <code>surket.settings</code>. Survives reloads, tabs, and browser restarts. Zero backend writes.</p>
+        </div>
+        <div class="info-box">
+          <h4>System Preference</h4>
+          <p><code>window.matchMedia("(prefers-color-scheme: light)")</code> with change listener. Auto-switches when OS setting changes.</p>
+        </div>
+        <div class="info-box">
+          <h4>Transitions</h4>
+          <p><code>transition: background .35s ease, color .25s ease</code> on body, sidebar, topbar, and cards for smooth mode switches.</p>
+        </div>
+        <div class="info-box">
+          <h4>Meta Sync</h4>
+          <p><code>&lt;meta name="theme-color"&gt;</code> updates to match the active mode. Mobile browser chrome matches app background.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Request Flow -->
+    <section class="section" id="request-flow">
+      <h2 class="section-title"><span class="num">8</span> Request Flow: Submit Response</h2>
+      <p class="section-desc">End-to-end flow when an attendee submits a survey response — from phone to live tally screen.</p>
+      <div class="diagram-card">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Phone as Attendee Phone
+    participant SPA as React SPA
+    participant API as Hono /api
+    participant Sec as Security Stack
+    participant Svc as service.ts
+    participant Agg as aggregate.ts
+    participant DB as Store (SQLite/D1)
+    participant Hub as LiveHub/DO
+    participant Screen as Presenter Screen
+
+    Phone->>SPA: Fill survey form
+    SPA->>API: POST /surveys/:id/responses
+    API->>Sec: Middleware chain
+    Sec->>Svc: submitResponse()
+    Svc->>DB: createResponse(surveyId, input)
+    Svc->>DB: getAnswerRows(surveyId)
+    Svc->>DB: getResponseMeta(surveyId)
+    Svc->>Agg: computeResults(survey, rows, meta)
+    Agg-->>Svc: SurveyResults { version, tallies, ... }
+    Svc->>Hub: publish(topic, results)
+    Hub-->>Screen: WebSocket push
+    Svc-->>API: { response, results }
+    API-->>SPA: 201 Created
+    SPA-->>Phone: Thank you screen
+
+    Note over Screen: Live bars animate<br/>to new values via<br/>CSS width transitions
+        </pre>
+      </div>
+    </section>
+
+    <div class="footer">
+      <p>Surket Architecture Diagrams — Generated with <a href="https://mermaid.js.org" target="_blank">Mermaid.js</a></p>
+      <p style="margin-top:4px">See also: <a href="./architecture.md">architecture.md</a> · <a href="./how-it-works.md">how-it-works.md</a> · <a href="./adr/README.md">ADR Index</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose',
+      flowchart: { htmlLabels: true, curve: 'basis' },
+      sequence: { mirrorActors: false, messageMargin: 40 },
+      er: { layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75 },
+      themeVariables: {
+        darkMode: true,
+        background: '#151c29',
+        primaryColor: '#1b2535',
+        primaryTextColor: '#eaf0fa',
+        primaryBorderColor: '#243044',
+        lineColor: '#6ea8fe',
+        secondaryColor: '#202b3e',
+        tertiaryColor: '#1b2535',
+        noteBkgColor: '#1b2535',
+        noteTextColor: '#eaf0fa',
+        noteBorderColor: '#243044',
+        actorBkg: '#1b2535',
+        actorBorder: '#33425c',
+        actorTextColor: '#eaf0fa',
+        actorLineColor: '#33425c',
+        signalColor: '#eaf0fa',
+        signalTextColor: '#eaf0fa',
+        labelBoxBkgColor: '#1b2535',
+        labelBoxBorderColor: '#33425c',
+        labelTextColor: '#eaf0fa',
+        loopTextColor: '#eaf0fa',
+        activationBorderColor: '#6ea8fe',
+        activationBkgColor: '#1b2535',
+        sequenceNumberColor: '#fff',
+        titleColor: '#eaf0fa',
+      }
+    });
+
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isLight = html.getAttribute('data-theme') === 'light';
+      html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      document.getElementById('theme-icon').textContent = isLight ? '☀️' : '🌙';
+
+      // Re-render mermaid with new theme
+      const dark = !isLight;
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: dark ? 'dark' : 'default',
+        securityLevel: 'loose',
+        flowchart: { htmlLabels: true, curve: 'basis' },
+        sequence: { mirrorActors: false, messageMargin: 40 },
+        er: { layoutDirection: 'TB' },
+        themeVariables: dark ? {
+          darkMode: true, background: '#151c29', primaryColor: '#1b2535',
+          primaryTextColor: '#eaf0fa', primaryBorderColor: '#243044',
+          lineColor: '#6ea8fe', secondaryColor: '#202b3e', tertiaryColor: '#1b2535',
+          noteBkgColor: '#1b2535', noteTextColor: '#eaf0fa', noteBorderColor: '#243044',
+          actorBkg: '#1b2535', actorBorder: '#33425c', actorTextColor: '#eaf0fa',
+          actorLineColor: '#33425c', signalColor: '#eaf0fa', signalTextColor: '#eaf0fa',
+          labelBoxBkgColor: '#1b2535', labelBoxBorderColor: '#33425c',
+          labelTextColor: '#eaf0fa', loopTextColor: '#eaf0fa',
+          activationBorderColor: '#6ea8fe', activationBkgColor: '#1b2535',
+          sequenceNumberColor: '#fff', titleColor: '#eaf0fa',
+        } : {
+          darkMode: false, background: '#ffffff', primaryColor: '#f0f1f4',
+          primaryTextColor: '#1a1d26', primaryBorderColor: '#dfe1e6',
+          lineColor: '#3b7ddd', secondaryColor: '#f5f6f8', tertiaryColor: '#e8eaef',
+          noteBkgColor: '#f0f1f4', noteTextColor: '#1a1d26', noteBorderColor: '#dfe1e6',
+          actorBkg: '#ffffff', actorBorder: '#c4c9d4', actorTextColor: '#1a1d26',
+          actorLineColor: '#dfe1e6', signalColor: '#1a1d26', signalTextColor: '#1a1d26',
+          labelBoxBkgColor: '#ffffff', labelBoxBorderColor: '#c4c9d4',
+          labelTextColor: '#1a1d26', loopTextColor: '#1a1d26',
+          activationBorderColor: '#3b7ddd', activationBkgColor: '#f0f1f4',
+          sequenceNumberColor: '#fff', titleColor: '#1a1d26',
+        }
+      });
+      // Re-render all diagrams
+      document.querySelectorAll('.mermaid[data-processed]').forEach(el => {
+        el.removeAttribute('data-processed');
+        el.innerHTML = el.textContent;
+      });
+      mermaid.run();
+    }
+
+    // Active nav link on scroll
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.toc a');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(a => a.classList.remove('active'));
+          const link = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>

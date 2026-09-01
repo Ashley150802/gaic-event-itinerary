@@ -1,0 +1,31 @@
+# Root Cloudflare Workers deployment config.
+# Cloudflare runs `npx wrangler deploy` from the workspace root, so this file
+# mirrors server/wrangler.toml with root-relative paths.
+
+name = "surket"
+main = "server/src/worker.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serve the built SPA via static assets binding.
+assets = { binding = "ASSETS", directory = "web/dist" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "surket"
+database_id = "61ef8a1c-d355-4445-92e8-5fe96e83ea72"
+
+[[durable_objects.bindings]]
+name = "LIVE_TALLY"
+class_name = "LiveTallyRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LiveTallyRoom"]
+
+# Admin token protects mutating API routes (create/edit/delete events, surveys,
+# questions). Leave empty for open dev mode. For production, set a real secret:
+#   wrangler secret put ADMIN_TOKEN
+# Then enter the same token in the app's Settings > Admin access page.
+[vars]
+ADMIN_TOKEN = ""

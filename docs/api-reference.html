@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>API Reference — Surket</title>
+  <link rel="stylesheet" href="./docs-styles.css">
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span id="ti">☀️</span></button>
+  <div class="container">
+    <a class="back-link" href="./index.html">← Documentation Index</a>
+    <div class="doc-header"><h1>API Reference</h1><p>Complete HTTP API contract. Base path: <code>/api</code>. JSON in, JSON out.</p></div>
+
+    <h2>Authentication</h2>
+    <p>When <code>ADMIN_TOKEN</code> is configured, <strong>write routes</strong> require one of:</p>
+    <ul>
+      <li><code>Authorization: Bearer &lt;token&gt;</code></li>
+      <li><code>x-admin-token: &lt;token&gt;</code> header</li>
+    </ul>
+    <p><strong>Public routes</strong> (no token needed): all GET routes, <code>POST /api/surveys/:id/responses</code>, <code>GET /api/join/:code</code>.</p>
+
+    <h2>Endpoints</h2>
+
+    <h3>System</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/health</code></td><td>Liveness probe: <code>{ ok, service, time }</code></td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/config</code></td><td>Runtime config: <code>{ requiresAuth, liveTransport }</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Templates</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/templates</code></td><td>List all event + survey templates</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/templates/events/:templateId</code></td><td>Instantiate an event blueprint</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/templates/surveys/:templateId</code></td><td>Instantiate a survey template</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Events</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/events</code></td><td>List all events</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/events</code></td><td>Create event</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/events/slug/:slug</code></td><td>Get event by slug</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/events/:id</code></td><td>Get event by ID</td></tr>
+        <tr><td><span class="method method-patch">PATCH</span></td><td><code>/api/events/:id</code></td><td>Update event</td></tr>
+        <tr><td><span class="method method-delete">DELETE</span></td><td><code>/api/events/:id</code></td><td>Delete event (cascades)</td></tr>
+      </tbody>
+    </table>
+    <h4>Create/Update Event Body</h4>
+    <pre><code>{ "title": "string", "description": "string", "organizer": "string",
+  "location": "string", "startsAt": "ISO date | null",
+  "theme": "aurora | ember | forest | violet | rose",
+  "status": "draft | live | archived", "slug": "string" }</code></pre>
+
+    <h3>Segments (Itinerary)</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/events/:id/segments</code></td><td>List segments</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/events/:id/segments</code></td><td>Create segment</td></tr>
+        <tr><td><span class="method method-patch">PATCH</span></td><td><code>/api/segments/:id</code></td><td>Update segment</td></tr>
+        <tr><td><span class="method method-delete">DELETE</span></td><td><code>/api/segments/:id</code></td><td>Delete segment</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/events/:id/segments/reorder</code></td><td>Reorder segments</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Surveys</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/surveys?eventId=ID</code></td><td>List surveys</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/surveys</code></td><td>Create survey</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/surveys/:id</code></td><td>Get survey with questions</td></tr>
+        <tr><td><span class="method method-patch">PATCH</span></td><td><code>/api/surveys/:id</code></td><td>Update survey</td></tr>
+        <tr><td><span class="method method-delete">DELETE</span></td><td><code>/api/surveys/:id</code></td><td>Delete survey</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/surveys/:id/duplicate</code></td><td>Clone survey</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/join/:code</code></td><td>Resolve join code → survey</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/surveys/:id/results</code></td><td>Computed SurveyResults</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Questions</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/surveys/:id/questions</code></td><td>Create question</td></tr>
+        <tr><td><span class="method method-patch">PATCH</span></td><td><code>/api/questions/:id</code></td><td>Update question</td></tr>
+        <tr><td><span class="method method-delete">DELETE</span></td><td><code>/api/questions/:id</code></td><td>Delete question</td></tr>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/surveys/:id/questions/reorder</code></td><td>Reorder questions</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Responses</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-post">POST</span></td><td><code>/api/surveys/:id/responses</code></td><td>Submit response (<strong>public</strong>)</td></tr>
+        <tr><td><span class="method method-get">GET</span></td><td><code>/api/surveys/:id/responses?limit=50</code></td><td>List responses</td></tr>
+      </tbody>
+    </table>
+    <h4>Submit Response Body</h4>
+    <pre><code>{ "channel": "web", "note": "",
+  "answers": [
+    { "questionId": "q1", "value": "Option A" },
+    { "questionId": "q2", "value": 4 },
+    { "questionId": "q3", "value": ["A", "C"] }
+  ]
+}</code></pre>
+
+    <h3>Live Tally (WebSocket)</h3>
+    <table>
+      <thead><tr><th>Protocol</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method method-ws">WS</span></td><td><code>/api/live?surveyId=ID</code></td><td>Subscribe to live results</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Response Types</h2>
+    <h3>SurveyResults</h3>
+    <pre><code>{ surveyId: string; totalResponses: number; completionRate: number;
+  averageRating: number | null; npsScore: number | null;
+  sentiment: { positive: number; neutral: number; negative: number };
+  questions: QuestionTally[]; channels: { label: string; value: number }[];
+  daily: { label: string; value: number }[];
+  keywords: { word: string; count: number }[];
+  version: number; }</code></pre>
+
+    <h2>Error Responses</h2>
+    <p>All errors return JSON: <code>{ "error": "message" }</code></p>
+    <table>
+      <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>400</code></td><td>Bad request (validation error)</td></tr>
+        <tr><td><code>401</code></td><td>Unauthorized (missing/invalid admin token)</td></tr>
+        <tr><td><code>404</code></td><td>Resource not found</td></tr>
+        <tr><td><code>429</code></td><td>Rate limited (120 req/min)</td></tr>
+        <tr><td><code>500</code></td><td>Internal server error</td></tr>
+      </tbody>
+    </table>
+
+    <div class="doc-footer"><p><a href="./index.html">← Documentation Index</a> · <a href="https://github.com/LehroSolutions/surket">GitHub</a></p></div>
+  </div>
+  <script>function toggleTheme(){const h=document.documentElement;const l=h.getAttribute('data-theme')==='light';h.setAttribute('data-theme',l?'dark':'light');document.getElementById('ti').textContent=l?'☀️':'🌙';}</script>
+</body>
+</html>
