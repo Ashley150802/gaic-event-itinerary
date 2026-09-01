@@ -1,13 +1,13 @@
-# Surket
+# GAIC EVENT ITINERY & SURVEY
 
 **All-in-one event itinerary + live survey platform.**
 _Powered by Lehro Solutions._
 
-Surket lets organizers run an event end to end: publish a day's **itinerary**, attach **surveys** to it, collect answers **on demand** from attendees' phones, and **tally results live** on a big screen in front of the audience. It ships with multiple ready-to-use **templates**, a professional dashboard UI, and a backend that runs on plain SQLite today and scales to Cloudflare D1 / Vercel tomorrow.
+The app lets organisation run an event end to end: publish a day's **itinerary**, attach **surveys** to it, collect answers **on demand** from attendees' phones, and **tally results live** on a big screen in front of the audience. It ships with multiple ready-to-use **templates**, a professional dashboard UI, and a backend that runs on plain SQLite today and scales to Cloudflare D1 / Vercel tomorrow.
 
 ---
 
-## Why Surket
+## Why?
 
 - **Itinerary + surveys, merged.** An event has a timeline of segments (keynote, session, workshop, panel, break, networking, survey). Any segment can link to a survey, so "now answer this" is one tap away.
 - **Live tally.** Responses stream to a presenter view via WebSockets, with an automatic polling fallback so it works on any host.
