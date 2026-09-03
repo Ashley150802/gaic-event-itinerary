@@ -658,16 +658,15 @@ body.force-reduce-motion body::before { animation: none !important; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 2px;
   width: 100%;
   margin-bottom: 18px;
 }
 
 .brand > img {
   width: 120px;
-  height: 100px;
+  height: auto;
   max-width: 200px;
-  max-height: 200px;
   object-position: left center;
   object-fit: contain;
   display: block;
