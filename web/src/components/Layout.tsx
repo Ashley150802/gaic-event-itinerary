@@ -30,7 +30,7 @@ export function Layout(props: { children: ReactNode }) {
       <aside className="sidebar">
         <div className="sidebar-bg" aria-hidden="true"><ColorBends colors={["#116c2b", "#18C95A", "#073c0e"]} opacity={0.12} /></div>
         <Link to="/" className="brand">
-          <div className="brand-mark"><img src="/GautengaiLogo.jpeg" alt="GAIC Logo" /></div>
+          <img src="/GAIC logo Color.png" alt="GAIC Logo" />
           <div>
             {/* <div className="brand-name">Gauteng AI Community</div> */}
             <div className="brand-sub">Event Itinerary + live surveys</div>
