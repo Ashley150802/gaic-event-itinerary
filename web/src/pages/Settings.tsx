@@ -250,7 +250,7 @@ export function Settings() {
             </select>
           </Field>
           <div className="grid grid-2">
-            <Field label="Default organizer"><input className="input" value={settings.defaultOrganizer} onChange={(e) => update({ defaultOrganizer: e.target.value })} placeholder="Lehro Solutions" /></Field>
+              <Field label="Default organiser"><input className="input" value={settings.defaultOrganizer} onChange={(e) => update({ defaultOrganizer: e.target.value })} placeholder="GAIC" /></Field>
             <Field label="Default location"><input className="input" value={settings.defaultLocation} onChange={(e) => update({ defaultLocation: e.target.value })} placeholder="Cape Town" /></Field>
           </div>
           <Field label="Default timezone" hint="Used for event time display across the app. Auto-detected from your browser.">
