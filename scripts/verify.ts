@@ -142,6 +142,25 @@ async function main() {
   const byCode = await store5.getSurveyByJoinCode(liveSurvey.joinCode);
   check("lookup by join code works", !!byCode && byCode.id === liveSurvey.id, byCode?.id);
 
+  section("9. Archived event history retention");
+  const archiveStore = newStore();
+  await archiveStore.init();
+  const archivedEvent = await archiveStore.createEvent({ title: "Completed event", status: "live" });
+  const archivedSurvey = await archiveStore.createSurvey({ title: "Event feedback", eventId: archivedEvent.id, status: "closed" });
+  const archivedQuestion = await archiveStore.createQuestion(archivedSurvey.id, { label: "How was it?", type: "rating" });
+  await archiveStore.createResponse(archivedSurvey.id, {
+    answers: [{ questionId: archivedQuestion!.id, value: 5 }],
+  });
+  await archiveStore.updateEvent(archivedEvent.id, { status: "archived" });
+  const retainedEvent = await archiveStore.getEvent(archivedEvent.id);
+  const retainedSurveys = await archiveStore.listSurveys(archivedEvent.id);
+  const retainedHistory = await getSurveyResults(archiveStore, archivedSurvey.id);
+  check("archived event remains available", retainedEvent?.status === "archived", retainedEvent?.status);
+  check("archived event retains its survey and questions", retainedSurveys.some((s) => s.id === archivedSurvey.id) &&
+    (await archiveStore.getSurvey(archivedSurvey.id))?.questions.length === 1);
+  check("archived survey retains responses and analytics", retainedHistory?.results.totalResponses === 1 &&
+    retainedHistory.results.questions[0]?.average === 5, retainedHistory?.results);
+
   console.log(`\n==== ${passes} passed, ${failures} failed ====`);
   if (failures > 0) process.exit(1);
 }

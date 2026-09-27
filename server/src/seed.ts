@@ -19,7 +19,7 @@ export async function seedDemoData(store: Store): Promise<void> {
 
   await store.updateEvent(event.id, {
     title: "Founders & Builders AI Meetup",
-    organizer: "Lehro Solutions",
+    organizer: "GAIC",
     location: "Cape Town",
     status: "live",
   });

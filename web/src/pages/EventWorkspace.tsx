@@ -156,7 +156,7 @@ function DangerZone(props: { detail: EventDetail; onChange: () => void }) {
     <Card className="danger-zone">
       <h3 className="danger-title">Danger zone</h3>
       <div className="danger-row">
-        <div><div className="set-row-label">{event.status === "archived" ? "Reopen event" : "Archive event"}</div><div className="muted small">Archived events are hidden from the live dashboard but keep all data.</div></div>
+        <div><div className="set-row-label">{event.status === "archived" ? "Reopen event" : "Archive event"}</div><div className="muted small">Archived events stay available for future reference, including all surveys, questions, responses, and analytics. Open the event from the dashboard to review them.</div></div>
         {event.status === "archived"
           ? <Button variant="ghost" onClick={() => setStatus("draft")}>Reopen as draft</Button>
           : <Button variant="ghost" onClick={() => setStatus("archived")}>Archive</Button>}

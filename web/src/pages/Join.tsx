@@ -24,7 +24,7 @@ function Brand() {
       <div className="join-logo" aria-hidden="true"><IconBroadcast size={22} /></div>
       <div>
         <div className="join-word">Gauteng AI Community</div>
-        <div className="join-tag">Powered by Lehro Solutions</div>
+        <div className="join-tag">Powered by GAIC</div>
       </div>
     </div>
   );

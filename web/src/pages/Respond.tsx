@@ -84,7 +84,7 @@ export function Respond(props: { surveyId: string }) {
       </Card>
 
       <Button variant="primary" size="lg" block onClick={submit} disabled={busy}>{busy ? "Submitting\u2026" : "Submit response"}</Button>
-      <p className="faint small" style={footStyle}>Powered by Surket \u00b7 Lehro Solutions</p>
+      <p className="faint small" style={footStyle}>Powered by Surket \u00b7 GAIC</p>
     </div>
   );
 }

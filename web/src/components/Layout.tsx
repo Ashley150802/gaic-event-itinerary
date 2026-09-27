@@ -55,7 +55,7 @@ export function Layout(props: { children: ReactNode }) {
           <span>{isAuthenticated ? "Admin" : "Sign in"}</span>
           <span className={`auth-dot ${isAuthenticated ? "on" : ""}`} />
         </button>
-        <div className="sidebar-foot">{"GAIC EVENT ITINERARY \u00b7 Powered by Lehro Solutions"}</div>
+        <div className="sidebar-foot">{"GAIC EVENT ITINERARY \u00b7 Powered by GAIC"}</div>
       </aside>
       <div className="main">
         <header className="topbar">
