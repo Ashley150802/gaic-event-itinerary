@@ -87,7 +87,7 @@ export function LivePresent(props: { surveyId: string }) {
 
       <div className="present-head" style={navStyle}>
         <span className="muted small">Question {qIndex + 1} of {survey.questions.length} \u00b7 use \u2190 \u2192 to navigate</span>
-        <span className="muted small">Surket \u00b7 Lehro Solutions</span>
+        <span className="muted small">Surket \u00b7 GAIC</span>
       </div>
     </div>
   );

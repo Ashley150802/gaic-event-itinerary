@@ -6,7 +6,7 @@ import type { EventRecord, TemplateSummary } from "../types";
 import { Link, useRouter } from "../router";
 import { Button, Card, Badge, Spinner, Empty, Modal, Field, useToast } from "../components/ui";
 import { IconCalendar } from "../components/icons";
-import { useSettings } from "../lib/settings";
+import { useSettings, THEMES } from "../lib/settings";
 import { Counter } from "../components/reactbits/Counter";
 import { SplitText } from "../components/reactbits/SplitText";
 
@@ -148,15 +148,11 @@ function CreateEventModal(props: { onClose: () => void; onCreated: () => void })
           {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </Field>
-      <Field label="Organizer"><input className="input" value={organizer} onChange={(e) => setOrganizer(e.target.value)} placeholder="Lehro Solutions" /></Field>
+      <Field label="Organizer"><input className="input" value={organizer} onChange={(e) => setOrganizer(e.target.value)} placeholder="GAIC" /></Field>
       <Field label="Location"><input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Cape Town" /></Field>
       <Field label="Theme">
         <select className="select" value={theme} onChange={(e) => setTheme(e.target.value)}>
-          <option value="aurora">Aurora (blue / teal)</option>
-          <option value="ember">Ember (amber / orange)</option>
-          <option value="forest">Forest (green)</option>
-          <option value="violet">Violet</option>
-          <option value="rose">Rose</option>
+          {THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         </select>
       </Field>
     </Modal>

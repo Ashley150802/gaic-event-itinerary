@@ -125,7 +125,7 @@ export function PublicItinerary({ slug }: { slug: string }) {
         </section>
         <footer className="itin-footer">
           <span>Surket</span>
-          <span className="muted">Powered by Lehro Solutions</span>
+          <span className="muted">Powered by GAIC</span>
         </footer>
       </main>
     </div>

@@ -54,7 +54,7 @@ export function defaultSettings(): OperatorSettings {
     density: "comfortable",
     reduceMotion: false,
     defaultTemplateId: "",
-    defaultOrganizer: "",
+    defaultOrganizer: "GAIC",
     defaultLocation: "",
     defaultTimezone: detectTz(),
     presentation: { showQr: true, fontScale: 1, showPercentages: true },
