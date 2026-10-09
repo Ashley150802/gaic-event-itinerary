@@ -13,8 +13,13 @@
     "verify": "esbuild scripts/verify.ts --bundle --platform=node --format=esm --external:node:sqlite --outfile=.verify.mjs --log-level=warning && node --experimental-sqlite .verify.mjs",
     "deploy:cf": "pnpm --filter @surket/web build && pnpm --filter @surket/server deploy:cf"
   },
+  "dependencies": {
+    "hono": "4.12.25"
+  },
   "devDependencies": {
-    "esbuild": "latest"
+    "@types/node": "latest",
+    "esbuild": "latest",
+    "typescript": "latest"
   },
   "engines": {
     "node": ">=22.5.0"
