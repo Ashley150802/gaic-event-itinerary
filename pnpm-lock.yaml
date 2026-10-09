@@ -12,13 +12,13 @@ importers:
 
   .:
     dependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.6.4
       hono:
         specifier: 4.12.25
         version: 4.12.25
     devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 26.6.4
       esbuild:
         specifier: 0.28.1
         version: 0.28.1

@@ -14,10 +14,10 @@
     "deploy:cf": "pnpm --filter @surket/web build && pnpm --filter @surket/server deploy:cf"
   },
   "dependencies": {
+    "@types/node": "latest",
     "hono": "4.12.25"
   },
   "devDependencies": {
-    "@types/node": "latest",
     "esbuild": "latest",
     "typescript": "latest"
   },
