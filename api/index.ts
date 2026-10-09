@@ -14,7 +14,7 @@
 // the store to Cloudflare D1 / Turso libSQL (see DEPLOYMENT.md). Cloudflare
 // Workers + D1 is the recommended durable target.
 
-import { handle } from "hono/vercel";
+import { getRequestListener } from "@hono/node-server";
 import { DatabaseSync } from "node:sqlite";
 import { createApp } from "../server/src/app.js";
 import { createSqliteStore, type SqliteDriver } from "../server/src/sqliteStore.js";
@@ -43,4 +43,4 @@ const app = createApp({
   ensureReady,
 });
 
-export default handle(app);
+export default getRequestListener(app.fetch);

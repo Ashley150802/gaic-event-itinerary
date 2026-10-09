@@ -15,6 +15,7 @@
     "deploy:cf": "pnpm --filter @surket/web build && pnpm --filter @surket/server deploy:cf"
   },
   "dependencies": {
+    "@hono/node-server": "2.0.5",
     "@types/node": "latest",
     "hono": "4.12.25"
   },
