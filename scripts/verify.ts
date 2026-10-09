@@ -125,8 +125,13 @@ async function main() {
   const hub = new LiveHub();
   let received: any = null;
   const unsub = hub.subscribe(surveyTopic(liveSurvey.id), (payload) => { received = payload; });
-  const out = await submitResponse(store5, hub, liveSurvey.id, { answers: [{ questionId: liveQ!.id, value: 4 }] });
+  const out = await submitResponse(store5, hub, liveSurvey.id, {
+    respondentName: "Test Attendee",
+    answers: [{ questionId: liveQ!.id, value: 4 }],
+  });
   check("submitResponse returns response + results", !!out && !!out.results, !!out);
+  check("response stores the attendee name", out?.response.respondentName === "Test Attendee", out?.response.respondentName);
+  check("response listing includes the attendee name", (await store5.listResponses(liveSurvey.id))[0]?.respondentName === "Test Attendee");
   check("hub received a live results broadcast", received && received.type === "results" && received.surveyId === liveSurvey.id, received?.type);
   check("broadcast carries updated total", received?.results?.totalResponses === 1, received?.results?.totalResponses);
   unsub();

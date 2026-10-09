@@ -107,6 +107,19 @@ Access via the topbar or sidebar:
 
 ## For Attendees
 
+### Attendee Dashboard
+
+Open **Attendee portal** from the app navigation (or visit `/attendee`) to:
+
+- Browse live and completed events, search by event name, topic, or location, and open a public programme
+- Respond to surveys that are currently open for live events
+- Select **Join a survey** to enter a survey code; scanning a survey QR code with a phone camera opens the same join flow
+- Review answers submitted from this browser under **Your survey responses**
+
+No account is required. Response history is stored only in the current browser on the current device; it is not synced between devices and may be lost if browser site data is cleared.
+
+Whether a survey is opened from an event, a code, or a QR code, attendees see the survey welcome page and enter their name before answering questions.
+
 ### Joining a Survey
 
 1. **Scan the QR code** shown on the presenter screen, OR
@@ -114,6 +127,8 @@ Access via the topbar or sidebar:
 
 ### Answering Questions
 
+- Open the survey link and enter your first and last name on the welcome screen; no account or sign-in is needed
+- Your name is saved with your response and is visible to the event organizers
 - Follow the question flow — each type has an intuitive input
 - Required questions are marked with a red asterisk
 - Submit when complete — you'll see a thank-you screen

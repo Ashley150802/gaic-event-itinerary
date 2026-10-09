@@ -99,25 +99,27 @@ export function PublicItinerary({ slug }: { slug: string }) {
   }
 
   const { event, segments, surveys } = detail;
-  const liveSurveys = surveys.filter((s) => s.status === "live" || s.isLive);
   const ordered = [...segments].sort((a, b) => a.position - b.position);
+  const archived = event.status === "archived";
+  const publicSegments = archived ? ordered.map((segment) => ({ ...segment, surveyId: null })) : ordered;
+  const liveSurveys = archived ? [] : surveys.filter((s) => s.status === "live" || s.isLive);
 
   return (
     <div className="itin-screen">
       <ColorBends colors={["#5227FF", "#FF9FFC", "#7cff67"]} opacity={0.1} />
       <ItineraryHeader event={event} segmentCount={ordered.length} />
       <main className="itin-main">
-        <NowNext segments={ordered} surveys={surveys} onRate={(id) => navigate(`/r/${id}`)} />
+        <NowNext segments={publicSegments} surveys={surveys} onRate={(id) => navigate(`/r/${id}`)} />
         {liveSurveys.length > 0 && (
           <RateTheDay surveys={liveSurveys} onRate={(id) => navigate(`/r/${id}`)} />
         )}
         <section className="itin-section">
           <h2 className="itin-section-title"><IconCalendar size={18} /> Full schedule</h2>
-          {ordered.length === 0 ? (
+          {publicSegments.length === 0 ? (
             <p className="muted">The schedule will appear here once the organizer publishes it.</p>
           ) : (
             <ol className="timeline">
-              {ordered.map((seg, i) => (
+              {publicSegments.map((seg, i) => (
                 <TimelineItem key={seg.id} seg={seg} index={i} onRate={(id) => navigate(`/r/${id}`)} />
               ))}
             </ol>

@@ -4,13 +4,14 @@
 
 import { type ReactNode } from "react";
 import { Link, useRouter } from "../router";
-import { IconDashboard, IconTemplates, IconArrowRightCircle, IconSettings, IconBroadcast, IconSun, IconMoon, IconShieldCheck } from "./icons";
+import { IconDashboard, IconTemplates, IconArrowRightCircle, IconSettings, IconBroadcast, IconSun, IconMoon, IconShieldCheck, IconCompass } from "./icons";
 import { ColorBends } from "./reactbits/ColorBends";
 import { CardNav } from "./reactbits/CardNav";
 import { useSettings } from "../lib/settings";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: <IconDashboard size={18} /> },
+  { to: "/attendee", label: "Attendee portal", icon: <IconCompass size={18} /> },
   { to: "/templates", label: "Templates", icon: <IconTemplates size={18} /> },
   { to: "/join", label: "Join a survey", icon: <IconArrowRightCircle size={18} /> },
   { to: "/settings", label: "Settings", icon: <IconSettings size={18} /> },
@@ -83,6 +84,7 @@ export function Layout(props: { children: ReactNode }) {
 
 function deriveTitle(path: string): string {
   if (path === "/") return "Dashboard";
+  if (path.startsWith("/attendee")) return "Attendee portal";
   if (path.startsWith("/templates")) return "Templates";
   if (path.startsWith("/events")) return "Event workspace";
   if (path.startsWith("/surveys")) return "Survey builder";

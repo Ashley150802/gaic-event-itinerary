@@ -105,6 +105,11 @@ export function createD1Store(db: D1Like): Store {
           }
         }
       }
+      try {
+        await run("ALTER TABLE responses ADD COLUMN respondent_name TEXT NOT NULL DEFAULT ''");
+      } catch (e) {
+        if (!/duplicate column name/i.test(String(e))) throw e;
+      }
     },
     async listEvents() { return (await all("SELECT * FROM events ORDER BY created_at DESC")).map(mapEvent); },
     async getEvent(eventId) { const r = await first("SELECT * FROM events WHERE id = ?", eventId); return r ? mapEvent(r) : null; },
@@ -273,7 +278,9 @@ export function createD1Store(db: D1Like): Store {
       const createdAt = nowIso();
       const channel = str(input.channel || "web", 40);
       const note = str(input.note || "", 500);
-      await run("INSERT INTO responses (id, survey_id, created_at, channel, note) VALUES (?,?,?,?,?)", responseId, surveyId, createdAt, channel, note);
+      const respondentName = str(input.respondentName || "", 160).trim();
+      await run("INSERT INTO responses (id, survey_id, created_at, channel, note, respondent_name) VALUES (?,?,?,?,?,?)",
+        responseId, surveyId, createdAt, channel, note, respondentName);
       const valid = new Map(survey.questions.map((q) => [q.id, q]));
       const answers: Record<string, any> = {};
       for (const ans of input.answers || []) {
@@ -281,7 +288,7 @@ export function createD1Store(db: D1Like): Store {
         await run("INSERT INTO answers (id, response_id, question_id, value) VALUES (?,?,?,?)", id("ans"), responseId, ans.questionId, JSON.stringify(ans.value));
         answers[ans.questionId] = ans.value;
       }
-      return { id: responseId, surveyId, createdAt, channel, note, answers };
+      return { id: responseId, surveyId, createdAt, channel, note, respondentName, answers };
     },
     async listResponses(surveyId, limit = 50) {
       const rows = await all("SELECT * FROM responses WHERE survey_id = ? ORDER BY created_at DESC LIMIT ?", surveyId, limit);
@@ -290,7 +297,10 @@ export function createD1Store(db: D1Like): Store {
         const ansRows = await all("SELECT question_id, value FROM answers WHERE response_id = ?", row.id);
         const answers: Record<string, any> = {};
         for (const a of ansRows) answers[a.question_id] = safeJsonParse(a.value, a.value);
-        out.push({ id: row.id, surveyId: row.survey_id, createdAt: row.created_at, channel: row.channel, note: row.note, answers });
+        out.push({
+          id: row.id, surveyId: row.survey_id, createdAt: row.created_at, channel: row.channel,
+          note: row.note, respondentName: row.respondent_name || "", answers,
+        });
       }
       return out;
     },

@@ -5,6 +5,7 @@ import { useRouter, matchRoute } from "./router";
 import { Layout } from "./components/Layout";
 import { ToastProvider } from "./components/ui";
 import { Dashboard } from "./pages/Dashboard";
+import { AttendeeDashboard } from "./pages/AttendeeDashboard";
 import { Templates } from "./pages/Templates";
 import { Settings } from "./pages/Settings";
 import { Join, JoinConfirm } from "./pages/Join";
@@ -19,6 +20,8 @@ export function App() {
   const { path } = useRouter();
 
   // Full-screen routes (no shell).
+  if (path === "/attendee") return <ToastProvider><AttendeeDashboard /></ToastProvider>;
+  if (path === "/attendee/join") return <ToastProvider><Join attendeeMode /></ToastProvider>;
   const present = matchRoute("/present/:id", path);
   if (present) return <ToastProvider><LivePresent surveyId={present.id} /></ToastProvider>;
   const respond = matchRoute("/r/:id", path);

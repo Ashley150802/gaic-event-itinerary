@@ -103,6 +103,7 @@ export interface ResponseWithAnswers {
   createdAt: string;
   channel: string;
   note: string;
+  respondentName: string;
   answers: Record<string, string | number | string[]>;
 }
 

@@ -12,6 +12,8 @@ import { IconArrowLeft, IconChevronUp, IconChevronDown, IconClose, IconShare, Ic
 import { exportResultsCsv, exportResultsJson } from "../lib/export";
 import { formatInZone, detectTimezone } from "../lib/timezone";
 import { SplitText } from "../components/reactbits/SplitText";
+import { OpenTextResponses } from "../components/OpenTextResponses";
+import { useSurveyResponses } from "../hooks/useSurveyResponses";
 
 type Tab = "overview" | "itinerary" | "surveys" | "analytics";
 
@@ -408,6 +410,7 @@ function AnalyticsTab(props: { detail: EventDetail }) {
   const surveys = detail.surveys;
   const [surveyId, setSurveyId] = useState<string | null>(surveys[0]?.id ?? null);
   const live = useLiveTally(surveyId, 6000);
+  const submitted = useSurveyResponses(surveyId);
   if (surveys.length === 0) return <Card><Empty title="No data yet">Create a survey and collect responses to see analytics.</Empty></Card>;
   const r = live.results;
   const curTitle = surveys.find((s) => s.id === surveyId)?.title || "survey";
@@ -435,11 +438,15 @@ function AnalyticsTab(props: { detail: EventDetail }) {
         <Card><h3 style={blockTitleStyle}>Responses over time</h3>{r && r.daily.length > 0 ? <Sparkline points={r.daily.map((d) => ({ label: d.label, value: d.value }))} /> : <p className="faint small">No data yet.</p>}</Card>
         <Card><h3 style={blockTitleStyle}>Sentiment</h3>{r ? <Donut data={[{ label: "Positive", value: r.sentiment.positive }, { label: "Neutral", value: r.sentiment.neutral }, { label: "Negative", value: r.sentiment.negative }]} /> : null}</Card>
       </div>
-      {r && r.keywords.length > 0 && (
-        <Card><h3 style={blockTitleStyle}>Top keywords</h3>
-          <div className="chips">{r.keywords.map((k) => <span className="chip" key={k.word}><strong>{k.word}</strong> {k.count}</span>)}</div>
+      {r?.questions.filter((question) => question.type === "text").map((question) => (
+        <Card key={question.questionId}>
+          <div className="row between" style={blockTitleStyle}>
+            <h3>{question.label}</h3>
+            <span className="small faint">{question.total} written responses</span>
+          </div>
+          <OpenTextResponses questionId={question.questionId} {...submitted} />
         </Card>
-      )}
+      ))}
     </div>
   );
 }

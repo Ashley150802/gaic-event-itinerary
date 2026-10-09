@@ -134,6 +134,10 @@ export function createSqliteStore(db: SqliteDriver): Store {
   return {
     async init() {
       db.exec(SCHEMA_SQL);
+      const responseColumns = db.prepare("PRAGMA table_info(responses)").all();
+      if (!responseColumns.some((column) => column.name === "respondent_name")) {
+        db.exec("ALTER TABLE responses ADD COLUMN respondent_name TEXT NOT NULL DEFAULT ''");
+      }
     },
 
     // ---- events ----
@@ -404,9 +408,10 @@ export function createSqliteStore(db: SqliteDriver): Store {
       const createdAt = nowIso();
       const channel = str(input.channel || "web", 40);
       const note = str(input.note || "", 500);
+      const respondentName = str(input.respondentName || "", 160).trim();
       db.prepare(
-        "INSERT INTO responses (id, survey_id, created_at, channel, note) VALUES (?, ?, ?, ?, ?)"
-      ).run(responseId, surveyId, createdAt, channel, note);
+        "INSERT INTO responses (id, survey_id, created_at, channel, note, respondent_name) VALUES (?, ?, ?, ?, ?, ?)"
+      ).run(responseId, surveyId, createdAt, channel, note, respondentName);
 
       const valid = new Map(survey.questions.map((q) => [q.id, q]));
       const answers: Record<string, any> = {};
@@ -419,7 +424,7 @@ export function createSqliteStore(db: SqliteDriver): Store {
         insert.run(id("ans"), responseId, ans.questionId, encoded);
         answers[ans.questionId] = ans.value;
       }
-      return { id: responseId, surveyId, createdAt, channel, note, answers };
+      return { id: responseId, surveyId, createdAt, channel, note, respondentName, answers };
     },
     async listResponses(surveyId, limit = 50) {
       const rows = db
@@ -438,6 +443,7 @@ export function createSqliteStore(db: SqliteDriver): Store {
           createdAt: row.created_at,
           channel: row.channel,
           note: row.note,
+          respondentName: row.respondent_name || "",
           answers,
         });
       }

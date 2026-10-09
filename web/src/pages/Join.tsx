@@ -37,7 +37,7 @@ function statusTone(status: string): { label: string; live: boolean } {
   return { label: "Not started yet", live: false };
 }
 
-export function Join() {
+export function Join({ attendeeMode = false }: { attendeeMode?: boolean }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const { navigate } = useRouter();
@@ -86,6 +86,9 @@ export function Join() {
           <div className="join-scan-hint">
             <IconQr size={15} /> Scanning a QR code opens your survey automatically.
           </div>
+          <button className="join-link" onClick={() => navigate(attendeeMode ? "/attendee" : "/")}>
+            {attendeeMode ? "Back to event dashboard" : "Back to dashboard"}
+          </button>
         </Card>
       </div>
     </div>

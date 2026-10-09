@@ -129,7 +129,7 @@ export const api = {
   deleteQuestion: (id: string) => request<{ deleted: boolean }>(`/api/questions/${enc(id)}`, { method: "DELETE" }),
   reorderQuestions: (surveyId: string, orderedIds: string[]) => request<{ ok: boolean }>(`/api/surveys/${enc(surveyId)}/questions/reorder`, { method: "POST", ...body({ orderedIds }) }),
 
-  submitResponse: (surveyId: string, data: { channel?: string; note?: string; answers: { questionId: string; value: unknown }[] }) =>
+  submitResponse: (surveyId: string, data: { channel?: string; note?: string; respondentName?: string; answers: { questionId: string; value: unknown }[] }) =>
     request<SubmitResponseResult>(`/api/surveys/${enc(surveyId)}/responses`, { method: "POST", ...body(data) }),
   listResponses: (surveyId: string, limit = 50) => request<ResponseWithAnswers[]>(`/api/surveys/${enc(surveyId)}/responses?limit=${encodeURIComponent(String(limit))}`),
 

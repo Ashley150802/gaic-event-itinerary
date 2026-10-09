@@ -12,6 +12,8 @@ import { useLiveTally } from "../hooks/useLiveTally";
 import { SharePanel } from "../components/Share";
 import { IconArrowLeft, IconChevronUp, IconChevronDown, IconClose, IconHelpCircle, IconInbox, IconShare } from "../components/icons";
 import { SplitText } from "../components/reactbits/SplitText";
+import { OpenTextResponses } from "../components/OpenTextResponses";
+import { useSurveyResponses } from "../hooks/useSurveyResponses";
 
 const NEEDS_OPTIONS: QuestionType[] = ["single", "multi"];
 
@@ -189,6 +191,7 @@ function PreviewTab(props: { survey: SurveyWithQuestions }) {
 
 function ResultsTab(props: { surveyId: string }) {
   const live = useLiveTally(props.surveyId, 5000);
+  const submitted = useSurveyResponses(props.surveyId);
   const r = live.results;
   if (!r) return <Card><div className="center-screen"><Spinner /></div></Card>;
   if (r.totalResponses === 0) return <Card><Empty icon={<IconInbox size={36} />} title="No responses yet">Share the join code or QR to start collecting.</Empty></Card>;
@@ -206,12 +209,11 @@ function ResultsTab(props: { surveyId: string }) {
             <h3>{q.label}</h3>
             <span className="small faint">{q.total} answers{q.average != null ? ` \u00b7 avg ${q.average.toFixed(2)}` : ""}</span>
           </div>
-          {q.buckets.length > 0 ? <BarChart buckets={q.buckets} /> : <p className="faint small">Open text \u2014 see keywords below.</p>}
+          {q.type === "text"
+            ? <OpenTextResponses questionId={q.questionId} {...submitted} />
+            : <BarChart buckets={q.buckets} />}
         </Card>
       ))}
-      {r.keywords.length > 0 && (
-        <Card><h3 style={resQHeadStyle}>Keywords</h3><div className="chips">{r.keywords.map((k) => <span className="chip" key={k.word}><strong>{k.word}</strong> {k.count}</span>)}</div></Card>
-      )}
     </div>
   );
 }

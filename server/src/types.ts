@@ -100,6 +100,7 @@ export interface ResponseRecord {
   createdAt: string;
   channel: string;
   note: string;
+  respondentName: string;
 }
 
 export interface ResponseWithAnswers extends ResponseRecord {
@@ -189,6 +190,7 @@ export interface CreateQuestionInput {
 export interface CreateResponseInput {
   channel?: string;
   note?: string;
+  respondentName?: string;
   answers: AnswerInput[];
 }
 
