@@ -2,6 +2,7 @@
   "name": "surket",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Surket - an all-in-one event itinerary + live survey platform. Powered by GAIC.",
   "packageManager": "pnpm@9.12.0",
   "scripts": {
